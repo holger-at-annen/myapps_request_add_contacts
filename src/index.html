@@ -14,20 +14,36 @@
       padding: 2rem;
       border-radius: 0.5rem;
       max-width: 600px;
-      margin: auto;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      box-sizing: border-box;
     }
-    .contact-form h1 {
+    .contact-list {
+      background: white;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      max-width: 500px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      box-sizing: border-box;
+    }
+    .contact-form h1, .contact-list h1 {
       font-size: 1.5rem;
       font-weight: bold;
-      margin-bottom: 1.5rem;
+      margin-bottom: 0;
     }
     .contact-form h2 {
       font-size: 1.25rem;
       font-weight: 600;
       margin: 1.5rem 0 1rem;
     }
-    .contact-form div {
+    .contact-form div, .contact-list div {
       margin-bottom: 1rem;
     }
     .contact-form label {
@@ -37,35 +53,118 @@
     }
     .contact-form input {
       width: 100%;
+      max-width: 100%;
       padding: 0.5rem;
       border: 1px solid #ccc;
       border-radius: 0.25rem;
+      box-sizing: border-box;
+    }
+    .form-scrollable {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 144px;
+      min-width: 20ch;
+      width: 100%;
+      max-width: 100%;
+    }
+    .list-scrollable {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 120px;
     }
     .contact-form button {
-      width: 100%;
       padding: 0.5rem;
-      background: #3b82f6;
-      color: white;
       border-radius: 0.25rem;
       cursor: pointer;
-    }
-    .contact-form button:hover {
-      background: #2563eb;
     }
     .contact-form .error {
       color: red;
       margin-bottom: 1rem;
     }
+    .contact-list ul {
+      margin: 0;
+      padding: 0;
+    }
+    .contact-list li {
+      display: flex;
+      align-items: flex-end;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    .contact-list li:last-child {
+      border-bottom: none;
+    }
+    .contact-list li input[type="checkbox"] {
+      margin: 0 0.5rem 0 0;
+      width: 16px;
+      height: 16px;
+    }
+    .contact-list li span {
+      font-size: 1rem;
+      line-height: 1rem;
+      margin: 0;
+      flex-grow: 1;
+    }
+    .edit-icon-container {
+      width: 16px;
+      height: 16px;
+      margin-left: 0.5rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .edit-icon {
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      min-height: 16px;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 0.25rem;
+      flex-shrink: 0;
+      min-width: 0;
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+    .btn-primary:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #22c55e;
+      color: white;
+      padding: 0.5rem 1.5rem;
+      border-radius: 0.25rem;
+      flex-shrink: 0;
+      min-width: 0;
+    }
+    .btn-secondary:hover {
+      background: #16a34a;
+    }
+    .btn-secondary:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .btn-full {
+      width: 100%;
+      box-sizing: border-box;
+    }
   </style>
   <script src="/env.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div id="root"></div>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <div id="root" class="flex flex-row gap-4 w-full max-w-7xl" style="display: flex; flex-direction: row;"></div>
   <script type="text/babel">
     try {
       const { createRoot } = ReactDOM;
       function ContactForm() {
-        const [formData, setFormData] = React.useState({
+        const initialFormData = {
           givenname: '',
           sn: '',
           company: '',
@@ -84,8 +183,92 @@
           city: '',
           state: '',
           country: ''
-        });
+        };
+        const [formData, setFormData] = React.useState(initialFormData);
         const [error, setError] = React.useState('');
+        const [contacts, setContacts] = React.useState([]);
+        const [selectedContacts, setSelectedContacts] = React.useState([]);
+        const [editingContactId, setEditingContactId] = React.useState(null);
+        const [previousFormData, setPreviousFormData] = React.useState(null);
+
+        React.useEffect(() => {
+          console.log('Component mounted. Contacts:', contacts);
+          console.log('Form data:', formData);
+          console.log('Environment:', window.ENV);
+          console.log('Viewport width:', window.innerWidth);
+          const neuButton = document.querySelector('.contact-form button.btn-secondary');
+          if (neuButton) {
+            const rect = neuButton.getBoundingClientRect();
+            const computedStyle = getComputedStyle(neuButton);
+            console.log('Neu button width:', rect.width);
+            console.log('Neu button margin-left:', computedStyle.marginLeft);
+            console.log('Neu button padding-left:', computedStyle.paddingLeft);
+          }
+          const addButton = document.querySelector('.contact-form button.btn-primary');
+          if (addButton) {
+            const rect = addButton.getBoundingClientRect();
+            const computedStyle = getComputedStyle(addButton);
+            console.log('Zur Liste hinzufügen button width:', rect.width);
+            console.log('Zur Liste hinzufügen button margin-left:', computedStyle.marginLeft);
+            console.log('Zur Liste hinzufügen button padding-left:', computedStyle.paddingLeft);
+          }
+          const selectAllButton = document.querySelector('.contact-list button.btn-secondary');
+          if (selectAllButton) {
+            const rect = selectAllButton.getBoundingClientRect();
+            const computedStyle = getComputedStyle(selectAllButton);
+            console.log('Alle auswählen button width:', rect.width);
+            console.log('Alle auswählen button margin-left:', computedStyle.marginLeft);
+          }
+          const deleteButton = document.querySelector('.contact-list button.btn-primary');
+          if (deleteButton) {
+            const rect = deleteButton.getBoundingClientRect();
+            const computedStyle = getComputedStyle(deleteButton);
+            console.log('Auswahl löschen button width:', rect.width);
+            console.log('Auswahl löschen button margin-left:', computedStyle.marginLeft);
+            console.log('Auswahl löschen button right:', rect.right);
+          }
+          const contactForm = document.querySelector('.contact-form');
+          if (contactForm) {
+            const rect = contactForm.getBoundingClientRect();
+            const computedStyle = getComputedStyle(contactForm);
+            console.log('Contact-form width:', rect.width);
+            console.log('Contact-form padding-left:', computedStyle.paddingLeft);
+          }
+          const contactList = document.querySelector('.contact-list');
+          if (contactList) {
+            const rect = contactList.getBoundingClientRect();
+            console.log('Contact-list width:', rect.width);
+            console.log('Contact-list right:', rect.right);
+          }
+          const buttonsRow = document.querySelector('.contact-list .flex.justify-between');
+          if (buttonsRow) {
+            const rect = buttonsRow.getBoundingClientRect();
+            console.log('Buttons row width:', rect.width);
+            console.log('Buttons row right:', rect.right);
+          }
+          const listHeader = document.querySelector('.contact-list h1');
+          if (listHeader) {
+            const rect = listHeader.getBoundingClientRect();
+            console.log('Liste von Kontakten top:', rect.top);
+            console.log('Liste von Kontakten bottom:', rect.bottom);
+          }
+          const buttonsRowDiv = document.querySelector('.contact-list .flex.justify-between');
+          if (buttonsRowDiv) {
+            const rect = buttonsRowDiv.getBoundingClientRect();
+            console.log('Buttons row top:', rect.top);
+          }
+          const formHeader = document.querySelector('.contact-form h1');
+          if (formHeader) {
+            const rect = formHeader.getBoundingClientRect();
+            console.log('Kontakt: top:', rect.top);
+            console.log('Kontakt: bottom:', rect.bottom);
+          }
+          const neuButtonDiv = document.querySelector('.contact-form button.btn-secondary');
+          if (neuButtonDiv) {
+            const rect = neuButtonDiv.getBoundingClientRect();
+            console.log('Neu button top:', rect.top);
+          }
+        }, [contacts, formData]);
 
         const handleChange = (e) => {
           setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -94,25 +277,89 @@
           }
         };
 
-        const handleSubmit = () => {
+        const handleClearForm = () => {
+          console.log('Clearing form');
+          setFormData(initialFormData);
+          setError('');
+          setEditingContactId(null);
+          setPreviousFormData(null);
+        };
+
+        const handleAddToList = () => {
           if (!formData.displayname) {
             setError('Anzeigename ist erforderlich.');
+            console.log('Error: Displayname required');
             return;
           }
 
+          if (editingContactId) {
+            console.log('Updating contact ID:', editingContactId);
+            setContacts(contacts.map(contact =>
+              contact.id === editingContactId ? { ...formData, id: editingContactId } : contact
+            ));
+            setFormData(previousFormData || initialFormData);
+            setEditingContactId(null);
+            setPreviousFormData(null);
+          } else {
+            console.log('Adding new contact');
+            const newContact = { ...formData, id: Date.now() };
+            setContacts([...contacts, newContact]);
+            setFormData(initialFormData);
+          }
+          setError('');
+        };
+
+        const handleEditContact = (contact) => {
+          console.log('Editing contact ID:', contact.id);
+          setPreviousFormData({ ...formData });
+          setFormData(contact);
+          setEditingContactId(contact.id);
+          setError('');
+        };
+
+        const handleSelectContact = (contactId) => {
+          console.log('Selecting contact ID:', contactId);
+          setSelectedContacts(prev =>
+            prev.includes(contactId)
+              ? prev.filter(id => id !== contactId)
+              : [...prev, contactId]
+          );
+        };
+
+        const handleSelectAll = () => {
+          console.log('Toggling select all');
+          if (selectedContacts.length === contacts.length) {
+            setSelectedContacts([]);
+          } else {
+            setSelectedContacts(contacts.map(contact => contact.id));
+          }
+        };
+
+        const handleDeleteSelected = () => {
+          console.log('Deleting selected contacts:', selectedContacts);
+          setContacts(contacts.filter(contact => !selectedContacts.includes(contact.id)));
+          setSelectedContacts([]);
+        };
+
+        const handleSubmit = () => {
+          if (contacts.length === 0) {
+            setError('Keine Kontakte zum Senden.');
+            console.log('Error: No contacts to send');
+            return;
+          }
+
+          console.log('Sending contacts:', contacts);
           const receiverEmail = window.ENV?.RECEIVER_EMAIL && window.ENV.RECEIVER_EMAIL !== '' 
             ? window.ENV.RECEIVER_EMAIL 
             : 'dummy@example.com';
-          const subject = encodeURIComponent(
-            `Kontakt hinzufügen: ${
-              formData.displayname || `${formData.givenname} ${formData.sn}`.trim() || 'Neuer Kontakt'
-            }`
-          );
+          const subject = encodeURIComponent('Kontakt hinzufügen: Mehrere Kontakte');
           const body = encodeURIComponent(
-            `${formData.givenname};${formData.sn};${formData.company};${formData.displayname};${formData.email};` +
-            `${formData.telephonenumber};${formData.mobile};${formData.homephone};;${formData.city};${formData.street};` +
-            `${formData.postalcode};${formData.state};${formData.country};;;;;;${formData.title};${formData.position};` +
-            `${formData.department};${formData.description};;;${formData.url};;`
+            contacts.map(contact =>
+              `${contact.givenname};${contact.sn};${contact.company};${contact.displayname};${contact.email};` +
+              `${contact.telephonenumber};${contact.mobile};${contact.homephone};;${contact.city};${contact.street};` +
+              `${contact.postalcode};${contact.state};${contact.country};;;;;;${contact.title};${contact.position};` +
+              `${contact.department};${contact.description};;;${contact.url};;`
+            ).join('\n')
           );
           window.location.href = `mailto:${receiverEmail}?subject=${subject}&body=${body}`;
         };
@@ -132,43 +379,116 @@
         );
 
         return (
-          <div className="contact-form">
-            <h1>Kontakt:</h1>
-            {error && <p className="error">{error}</p>}
+          <>
+            <div className="contact-form">
+              <div className="mb-4">
+                <h1>Kontakt:</h1>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button
+                    onClick={handleClearForm}
+                    className="btn-secondary btn-full"
+                  >
+                    Neu
+                  </button>
+                </div>
+              </div>
+              {error && <p className="error">{error}</p>}
+              <div className="form-scrollable">
+                <h2>Bezeichnung:</h2>
+                {renderInput('Vorname:', 'givenname')}
+                {renderInput('Nachname:', 'sn')}
+                {renderInput('Firma:', 'company')}
+                {renderInput('Anzeigename:', 'displayname', 'Erforderlich')}
+                {renderInput('Webseite:', 'url')}
 
-            <h2>Bezeichnung:</h2>
-            {renderInput('Vorname:', 'givenname')}
-            {renderInput('Nachname:', 'sn')}
-            {renderInput('Firma:', 'company')}
-            {renderInput('Anzeigename:', 'displayname', 'Erforderlich')}
-            {renderInput('Webseite:', 'url')}
+                <h2>Informationen:</h2>
+                {renderInput('Titel:', 'title')}
+                {renderInput('Position:', 'position')}
+                {renderInput('Abteilung:', 'department')}
+                {renderInput('Beschreibung:', 'description')}
 
-            <h2>Informationen:</h2>
-            {renderInput('Titel:', 'title')}
-            {renderInput('Position:', 'position')}
-            {renderInput('Abteilung:', 'department')}
-            {renderInput('Beschreibung:', 'description')}
+                <h2>Kontaktmöglichkeiten:</h2>
+                {renderInput('E-Mail:', 'email')}
+                {renderInput('Telefonnummer:', 'telephonenumber')}
+                {renderInput('Handynummer:', 'mobile')}
+                {renderInput('Private Telefonnummer:', 'homephone')}
 
-            <h2>Kontaktmöglichkeiten:</h2>
-            {renderInput('E-Mail:', 'email')}
-            {renderInput('Telefonnummer:', 'telephonenumber')}
-            {renderInput('Handynummer:', 'mobile')}
-            {renderInput('Private Telefonnummer:', 'homephone')}
-
-            <h2>Adresse:</h2>
-            {renderInput('Straße:', 'street')}
-            {renderInput('PLZ:', 'postalcode')}
-            {renderInput('Ort:', 'city')}
-            {renderInput('Bundesland:', 'state')}
-            {renderInput('Land:', 'country')}
-
-            <button
-              onClick={handleSubmit}
-              className="mt-6 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
-            >
-              Senden
-            </button>
-          </div>
+                <h2>Adresse:</h2>
+                {renderInput('Straße:', 'street')}
+                {renderInput('PLZ:', 'postalcode')}
+                {renderInput('Ort:', 'city')}
+                {renderInput('Bundesland:', 'state')}
+                {renderInput('Land:', 'country')}
+              </div>
+              <button
+                onClick={handleAddToList}
+                className="mt-6 btn-primary btn-full"
+              >
+                {editingContactId ? 'Änderung speichern' : 'Zur Liste hinzufügen'}
+              </button>
+            </div>
+            <div className="contact-list">
+              <div className="mb-4">
+                <h1>Liste von Kontakten</h1>
+                <div className="flex justify-between items-center w-full" style={{ marginTop: '0.5rem' }}>
+                  <button
+                    onClick={handleSelectAll}
+                    className="btn-secondary"
+                    disabled={contacts.length === 0}
+                    style={{ marginRight: '1rem' }}
+                  >
+                    {selectedContacts.length === contacts.length && contacts.length > 0 ? 'Alle abwählen' : 'Alle auswählen'}
+                  </button>
+                  <button
+                    onClick={handleDeleteSelected}
+                    className="btn-primary"
+                    disabled={selectedContacts.length === 0}
+                  >
+                    Auswahl löschen
+                  </button>
+                </div>
+              </div>
+              <div className="list-scrollable">
+                <ul>
+                  {contacts.map(contact => (
+                    <li key={contact.id} className="flex items-end">
+                      <input
+                        type="checkbox"
+                        checked={selectedContacts.includes(contact.id)}
+                        onChange={() => handleSelectContact(contact.id)}
+                        className="mr-2"
+                      />
+                      <span>{contact.displayname}</span>
+                      <div className="edit-icon-container">
+                        <svg
+                          className="edit-icon"
+                          onClick={() => handleEditContact(contact)}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.5"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15.414 9 16l.586-2.828L17.414 5.586z"
+                          />
+                        </svg>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button
+                onClick={handleSubmit}
+                className="mt-4 btn-primary btn-full"
+                disabled={contacts.length === 0}
+              >
+                Senden
+              </button>
+            </div>
+          </>
         );
       }
 
@@ -176,6 +496,7 @@
       root.render(<ContactForm />);
     } catch (e) {
       console.error('Script error details:', e);
+      document.body.innerHTML = '<h1>Error loading application. Check console for details.</h1>';
     }
   </script>
 </body>
