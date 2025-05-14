@@ -16,6 +16,12 @@ services:
       - "traefik.http.routers.add-contacts-form.entryPoints=http"
     networks:
       - coolify
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 networks:
   coolify:
     name: coolify
