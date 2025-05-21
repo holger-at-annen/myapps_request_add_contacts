@@ -359,12 +359,25 @@
             : 'dummy@example.com';
           const subject = encodeURIComponent('myApps Kontakte hinzufügen');
           const body = encodeURIComponent(
-            contacts.map(contact =>
-              `${contact.givenname};${contact.sn};${contact.company};${contact.displayname};${contact.email};` +
-              `${contact.telephonenumber};${contact.mobile};${contact.homephone};;${contact.city};${contact.street};` +
-              `${contact.postalcode};${contact.state};${contact.country};;;;;;${contact.title};${contact.position};` +
-              `${contact.department};${contact.description};;;${contact.url};;`
-            ).join('\n')
+            contacts.map(contact => {
+              const processedContact = { ...contact };
+              // Trim spaces for all fields
+              Object.keys(processedContact).forEach(key => {
+                if (typeof processedContact[key] === 'string') {
+                  processedContact[key] = processedContact[key].trim();
+                }
+              });
+              // Special handling for telephonenumber, mobile, and homephone
+              ['telephonenumber', 'mobile', 'homephone'].forEach(key => {
+                if (processedContact[key]) {
+                  processedContact[key] = processedContact[key].replace(/^\+/, '00').replace(/\s+/g, '');
+                }
+              });
+              return `${processedContact.givenname};${processedContact.sn};${processedContact.company};${processedContact.displayname};${processedContact.email};` +
+                     `${processedContact.telephonenumber};${processedContact.mobile};${processedContact.homephone};;${processedContact.city};${processedContact.street};` +
+                     `${processedContact.postalcode};${processedContact.state};${processedContact.country};;;;;;${processedContact.title};${processedContact.position};` +
+                     `${processedContact.department};${processedContact.description};;;${processedContact.url};;`;
+            }).join('\n')
           );
           window.location.href = `mailto:${receiverEmail}?subject=${subject}&body=${body}`;
         };
